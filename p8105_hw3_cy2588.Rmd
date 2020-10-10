@@ -5,10 +5,6 @@ date: 10/7/2020
 output: github_document
 ---
 
-I'm an R Markdown document! 
-
-## Problem 1
-
 ```{r set up}
 library(tidyverse)
 library(p8105.datasets)
@@ -17,12 +13,22 @@ data("instacart")
 data("ny_noaa")
 
 knitr::opts_chunk$set(
-  fig.height = 8,
-  fig.width = 8,
+  fig.width = 6,
   fig.asp = .6,
-  out.width = "90%"
+  out.width = "90%",
+  message =F,
+  warning = F
 )
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
 ```
+
+## Problem 1
 
 This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns. 
 
@@ -83,7 +89,7 @@ knitr::kable()
 
 ## Problem 2
 
-Load, tidy, and otherwise wrangle the data.
+### Load, tidy, and otherwise wrangle the data.
 ```{r warning=FALSE}
 accel_df = 
   read.csv("./data/accel_data.csv") %>% 
@@ -117,7 +123,7 @@ accel_df =
 ```
 For now, in the final dataset, there are variables include `r names(accel_df)`, with a total of `r nrow(accel_df)` rows and `r ncol(accel_df)` columns, there are `r nrow(accel_df)` observations.  
 
-Traditional analyses of accelerometer data focus on the total activity over the day.Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+### Traditional analyses of accelerometer data focus on the total activity over the day.Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
 ```{r}
 accel_df %>% 
   group_by(week,day) %>% 
@@ -130,7 +136,7 @@ knitr::kable()
 It seems like activities from Tuesday to Friday are basically stable during these 5 weeks, however, the activities are significant lower on Saturday and Sunday in week 4 and 5, especially Saturday.
 
 
-Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+### Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
 ```{r}
 accel_df %>% 
   group_by(day_id, day, week) %>% 
@@ -138,7 +144,7 @@ accel_df %>%
              y = activity_count, 
              color = day, 
              group = day_id)) + 
-  geom_point(alpha = .05)+
+  geom_point(alpha = .1)+
   stat_smooth(se = F, 
               method = "loess") + 
   labs(title = "Activities plot",
@@ -149,13 +155,13 @@ accel_df %>%
   scale_y_continuous(name = "activity count", 
                       trans = "log10")
 ```
+
 Based on this graph, it's seems that daily active time of this 63 year-old male is basically from around 8am to 10pm, and for weekday, his activity counts would be higher and with longer active time.
 
 
 ## Problem 3
 
-### 1
-Do some data cleaning.
+### Do some data cleaning.
 ```{r}
 ny_noaa_df = 
   ny_noaa %>%
@@ -170,7 +176,7 @@ ny_noaa_df =
 skimr::skim_without_charts(ny_noaa_df)
 ```
 
-For snowfall, what are the most commonly observed values? Why?
+### For snowfall, what are the most commonly observed values? Why?
 ```{r}
 ny_noaa_df %>%
   filter(snow != "NA") %>%
@@ -180,8 +186,7 @@ ny_noaa_df %>%
 ```
 The most commonly observed value is 0, because It didn't snow in most of days.
 
-### 2
-Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
+### Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
 ```{r}
 ny_noaa_df %>% 
   filter(month %in% c("01","07")) %>% 
@@ -204,12 +209,13 @@ ny_noaa_df %>%
        x = "Year",
        y = "Temperature(C)")
 ```
-There's a increasing of tmax in January from 1981 to 1993, but not continue increase after that. The tmax of July are relatively stable. And all the temperature data basically follow the same variation, and relatively keep same differences between stations.
-There do have some outliers, such as temperature of January in 1982 or temperature of July in 1988 and 2004. They may caused by abnormal changes in the weather or just wrong data.
-Even if things are messy, are some stations usually higher or lower than others across years? Are some years higher or lower than you might expect? 
 
-### 3
-plot 1: tmax vs tmin for the full dataset.
+There's a increasing of max temperature in January from 1981 to 1993, but it didn't keep increasing after that. The max temperature of July are relatively stable. And all the temperature data basically follow the same variation, and relatively keep same temperature differences between stations. So, it seems that some stations are always colder or warmer.  
+There do have some outliers, such as temperature in January 1982 or in July 1988 and 2004. They may caused by abnormal weather or just wrong data.
+
+### Make a two-panel plot 
+
+##### plot 1: tmax vs tmin for the full dataset.
 ```{r}
 temp_plot = 
   ny_noaa_df %>%
@@ -221,8 +227,7 @@ temp_plot =
 ```
 
 
-
-plot 2: the distribution of snowfall values greater than 0 and less than 100 separately by year.
+##### plot 2: the distribution of snowfall values greater than 0 and less than 100 separately by year.
 ```{r fig.height=12,fig.width=8}
 snow_plot = 
   ny_noaa_df %>%
@@ -236,7 +241,7 @@ snow_plot =
        y = "Snowfall(mm)")
 ```
 
-combine panels
+#### combine panels
 ```{r warning=F}
 temp_plot / snow_plot
 ```
