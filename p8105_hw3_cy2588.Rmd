@@ -125,17 +125,18 @@ It seems like activities from Tuesday to Friday are basically stable during thes
 Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
 ```{r}
 accel_df %>% 
-  ggplot(aes(x = minute, y = activity_count, color = day)) + 
+  group_by(day_id, day, week) %>% 
+  ggplot(aes(x = minute, y = activity_count, color = day, group = day_id)) + 
   geom_point(alpha = .05)+
-  geom_smooth(se = F) + 
+  stat_smooth(se = F, method = "loess") + 
   labs(title = "Activities plot")+
-  scale_x_continuous(name ="minute" ,
+  scale_x_continuous(name ="Hour of day" ,
                      breaks = c(seq(120,1440,120)), 
                      labels = c("2h", "4h", "6h", "8h", "10h", "12h","14h", "16h", "18h","20h", "22h", "24h")) +
    scale_y_continuous(name = "activity count", 
-                      trans = "sqrt")
+                      trans = "log10")
 ```
-Based on this graph, it's seems that daily active time of this 63 year-old male is basically from 8am to 10pm, and for some week, Saturday and Sunday
+Based on this graph, it's seems that daily active time of this 63 year-old male is basically from around 8am to 10pm, and for weekday, his activity counts would be higher and with longer active time.
 
 
 ## Problem 3
