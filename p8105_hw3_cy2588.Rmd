@@ -12,6 +12,7 @@ I'm an R Markdown document!
 ```{r}
 library(tidyverse)
 library(p8105.datasets)
+library(patchwork)
 data("instacart")
 data("ny_noaa")
 ```
@@ -126,14 +127,19 @@ Accelerometer data allows the inspection activity over the course of the day. Ma
 ```{r}
 accel_df %>% 
   group_by(day_id, day, week) %>% 
-  ggplot(aes(x = minute, y = activity_count, color = day, group = day_id)) + 
+  ggplot(aes(x = minute, 
+             y = activity_count, 
+             color = day, 
+             group = day_id)) + 
   geom_point(alpha = .05)+
-  stat_smooth(se = F, method = "loess") + 
-  labs(title = "Activities plot")+
+  stat_smooth(se = F, 
+              method = "loess") + 
+  labs(title = "Activities plot",
+       caption = "Data from accelerometer data collected on a 63 year-old male with BMI 25")+
   scale_x_continuous(name ="Hour of day" ,
                      breaks = c(seq(120,1440,120)), 
                      labels = c("2h", "4h", "6h", "8h", "10h", "12h","14h", "16h", "18h","20h", "22h", "24h")) +
-   scale_y_continuous(name = "activity count", 
+  scale_y_continuous(name = "activity count", 
                       trans = "log10")
 ```
 Based on this graph, it's seems that daily active time of this 63 year-old male is basically from around 8am to 10pm, and for weekday, his activity counts would be higher and with longer active time.
@@ -144,14 +150,17 @@ Based on this graph, it's seems that daily active time of this 63 year-old male 
 ### 1
 Do some data cleaning.
 ```{r}
-ny_noaa_df = ny_noaa %>%
+ny_noaa_df = 
+  ny_noaa %>%
   separate(date, into = c("year","month","day")) %>%
-  mutate_at(vars(tmax:tmin), as.numeric) %>%
+  mutate_at(vars(year, month, day), as.factor) %>%
+  mutate_at(vars(prcp, snow, tmax, tmin), as.numeric) %>%
   mutate(
     prcp = prcp / 10,
     tmax = tmax / 10,
-    tmin = tmin / 10
+    tmin = tmin / 10,
   )
+skimr::skim_without_charts(ny_noaa_df)
 ```
 
 For snowfall, what are the most commonly observed values? Why?
@@ -159,8 +168,10 @@ For snowfall, what are the most commonly observed values? Why?
 ny_noaa_df %>%
   filter(snow != "NA") %>%
   count(snow) %>%
+  filter(snow >= "0")%>%
   arrange(desc(n))
 ```
+The most commonly observed value is 0, because It didn't snow in most of days.
 
 ### 2
 Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
@@ -180,29 +191,48 @@ ny_noaa_df %>%
   geom_path(alpha = 0.3) +
   facet_grid(~ month) +
   theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  labs(title = "Average max temperature in January and in July",
+       caption = "Data from NOAA National Climatic Data Center",
+       x = "Year",
+       y = "Temperature(C)")
 ```
+There's a increasing of tmax in January from 1981 to 1993, but not continue increase after that. The tmax of July are relatively stable.
+There do have some outliers, 
 Even if things are messy, are some stations usually higher or lower than others across years? Are some years higher or lower than you might expect? 
 
 ### 3
-* tmax vs tmin for the full dataset hexplot
+plot 1: tmax vs tmin for the full dataset.
 ```{r}
-ny_noaa_df %>%
+temp_plot = 
+  ny_noaa_df %>%
    ggplot(aes(x = tmax, y = tmin)) + 
-  geom_bin2d()
+   geom_bin2d()+
+   labs(title = "tmax vs tmin",
+       x = "max temperature(C)",
+       y = "min temperature(C)")
 ```
 
 
 
-* the distribution of snowfall values greater than 0 and less than 100 separately by year  box or violin
-```{r}
-ny_noaa_df %>%
+plot 2: the distribution of snowfall values greater than 0 and less than 100 separately by year.
+```{r fig.height=12,fig.width=8}
+snow_plot = 
+  ny_noaa_df %>%
   filter(between(snow,1,100))%>%
   ggplot(aes(x= year, y = snow))+
-  geom_violin()
+  geom_violin()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
+   labs(title = "distribution of snowfall separately by year",
+       caption = "Data from NOAA National Climatic Data Center",
+       x = "Year",
+       y = "Snowfall(mm)")
 ```
 
-
+combine panels
+```{r warning=F}
+temp_plot / snow_plot
+```
 
 
 
